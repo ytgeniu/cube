@@ -7,6 +7,16 @@ class Point:
         self.y = y
         self.z = z
 
+    def minus(self, other):
+        ret = Point()
+        ret.x = self.x - other.x
+        ret.y = self.y - other.y
+        ret.z = self.z - other.z
+        return ret
+    def multiply(self, other):
+        return self.x * other.x + self.y * other.y + self.z * other.z
+
+	
 default_surfase = ((1, 1), (-1, 1), (-1, -1), (1, -1))
 
 class Cube_Surfase:
@@ -15,6 +25,7 @@ class Cube_Surfase:
         self.m_length = length
         self.m_pos_index = pos_index
         self.m_pointlist  = []
+        self.m_isSelected = False
         if (1 == rank):
             interval = 0
         else:

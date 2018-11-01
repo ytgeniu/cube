@@ -33,7 +33,7 @@ def Draw():
     global surfaseList, surfase_internalList
     for surfase in surfaseList:
         colorMod = 0.6
-        if (surfase.m_pos_index[0] == 0):
+        if (surfase.m_isSelected == True):
             colorMod = 1
         glColor3f(default_color[surfase.m_surfase_index][0] * colorMod, default_color[surfase.m_surfase_index][1] * colorMod, default_color[surfase.m_surfase_index][2] * colorMod)
         glBegin(GL_POLYGON)
@@ -48,16 +48,7 @@ def Draw():
         glEnd()
     glFlush()
 
-    modelview = glGetDoublev(GL_MODELVIEW_MATRIX)
-    projection = glGetDoublev(GL_PROJECTION_MATRIX)
-    viewport = glGetIntegerv(GL_VIEWPORT)
 
-    posX = surfase_internalList[0].m_pointlist[0].x
-    posY = surfase_internalList[0].m_pointlist[0].y
-    posZ = surfase_internalList[0].m_pointlist[0].z
-
-    winpos = gluProject(posX,posY,posZ,modelview,projection,viewport)
-    print("x=%d,y=%d,z=%d", winpos[0], viewport[3] - winpos[1], winpos[2])
 """
     glEnable(GL_BLEND)
     glBlendFunc(GL_SRC_ALPHA,GL_ONE_MINUS_SRC_ALPHA)
@@ -81,7 +72,26 @@ def init_cube():
             for j in range(3):
                 surfase = cube_surface.Cube_Surfase(surfase_index, 0.1, [i - 1, j - 1], 3)
                 surfaseList.append(surfase)
-    
+ 
+def PointinTriangle(A, B, C, P):
+    v0 = B.minus(A)
+    v1 = C.minus(A)
+    v2 = P.minus(A)
+
+    dot00 = v0.multiply(v0) 
+    dot01 = v0.multiply(v1) 
+    dot02 = v0.multiply(v2) 
+    dot11 = v1.multiply(v1) 
+    dot12 = v1.multiply(v2)
+			
+    inverDeno = 1.0 / (dot00 * dot11 - dot01 * dot01)
+    u = (dot11 * dot02 - dot01 * dot12) * inverDeno
+    if ((u < 0) or (u > 1)):
+        return False
+    v = (dot00 * dot12 - dot01 * dot02) * inverDeno
+    if ((v < 0) or (v > 1)):
+        return False
+    return u + v <= 1
 
 def SpecialKey(key,x,y):
     global rotate_x, rotate_y
@@ -106,12 +116,29 @@ def SpecialKey(key,x,y):
             Draw()
             time.sleep(0.1)
 def MousePoint(button, state, x, y):
+    global surfaseList
+    modelview = glGetDoublev(GL_MODELVIEW_MATRIX)
+    projection = glGetDoublev(GL_PROJECTION_MATRIX)
+    viewport = glGetIntegerv(GL_VIEWPORT)
+    P = cube_surface.Point(x, y, 0)
+			
     if(state==GLUT_DOWN):
         print("mouse click x=%d,y=%d", x, y)
+        selectSurfase = 0
         for surfase in surfaseList:
-            if((x >= surfase.m_pointlist[0].x) && (x <= surfase.m_pointlist[1].x)) || ((x >= surfase.m_pointlist[0].x) && (x <= surfase.m_pointlist[1].x)) 
-            glVertex3f(point.x, point.y, point.z)
-        glEnd()	
+            winpos = []
+            for point in surfase.m_pointlist:
+                pos = gluProject(point.x,point.y,point.z,modelview,projection,viewport)
+                winpos.append(cube_surface.Point(pos[0], viewport[3] - pos[1], 0))
+            if(PointinTriangle(winpos[0], winpos[1], winpos[2], P) or PointinTriangle(winpos[0], winpos[2], winpos[3], P)):
+                if (selectSurfase == 0) :
+                    selectSurfase = surfase
+                elif (surfase.z < selectSurfase.z):
+                    selectSurfase = surfase
+                    print("changge m_isSelected surfase=%d", surfase.m_surfase_index)
+        selectSurfase.m_isSelected = True
+        Draw()
+
 
 init_cube()
 glutInit()
