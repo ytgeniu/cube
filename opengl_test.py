@@ -125,16 +125,21 @@ def MousePoint(button, state, x, y):
     if(state==GLUT_DOWN):
         print("mouse click x=%d,y=%d", x, y)
         selectSurfase = 0
+        old_Sum_y = 0
         for surfase in surfaseList:
             winpos = []
+            sum_y = 0
             for point in surfase.m_pointlist:
                 pos = gluProject(point.x,point.y,point.z,modelview,projection,viewport)
                 winpos.append(cube_surface.Point(pos[0], viewport[3] - pos[1], 0))
+                sum_y = sum_y + pos[2]
             if(PointinTriangle(winpos[0], winpos[1], winpos[2], P) or PointinTriangle(winpos[0], winpos[2], winpos[3], P)):
                 if (selectSurfase == 0) :
                     selectSurfase = surfase
-                elif (surfase.z < selectSurfase.z):
+                    old_Sum_y = sum_y
+                elif (sum_y < old_Sum_y):
                     selectSurfase = surfase
+                    old_Sum_y = sum_y
                     print("changge m_isSelected surfase=%d", surfase.m_surfase_index)
         selectSurfase.m_isSelected = True
         Draw()
